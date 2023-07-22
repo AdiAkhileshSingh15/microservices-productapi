@@ -14,6 +14,8 @@ import (
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
 
+	rw.Header().Add("Content-Type", "application/json")
+
 	lp := data.GetProducts()
 	err := data.ToJSON(lp, rw)
 	if err != nil {

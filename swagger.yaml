@@ -99,13 +99,6 @@ paths:
                   required: true
                   schema:
                     $ref: '#/definitions/Product'
-                - description: The id of the product for which the operation relates
-                  format: int64
-                  in: path
-                  name: id
-                  required: true
-                  type: integer
-                  x-go-name: ID
             responses:
                 "201":
                     $ref: '#/responses/noContentResponse'
@@ -119,6 +112,14 @@ paths:
         delete:
             description: Update a products details
             operationId: deleteProduct
+            parameters:
+                - description: The id of the product for which the operation relates
+                  format: int64
+                  in: path
+                  name: id
+                  required: true
+                  type: integer
+                  x-go-name: ID
             responses:
                 "201":
                     $ref: '#/responses/noContentResponse'

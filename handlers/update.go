@@ -18,6 +18,8 @@ func (p *Products) UpdateProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle PUT Product")
 	prod := r.Context().Value(KeyProduct{}).(*data.Product)
 
+	rw.Header().Add("Content-Type", "application/json")
+
 	p.l.Printf("Prod: %#v", prod)
 	err := data.UpdateProduct(prod)
 	if err == data.ErrProductNotFound {
