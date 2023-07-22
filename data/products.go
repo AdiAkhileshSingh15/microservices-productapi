@@ -2,10 +2,7 @@ package data
 
 import (
 	"fmt"
-	"regexp"
 	"time"
-
-	"github.com/go-playground/validator/v10"
 )
 
 // Product defines the structure for an API product
@@ -41,23 +38,6 @@ type Products []*Product
 
 // ErrProductNotFound is an error raised when a product can not be found in the database
 var ErrProductNotFound = fmt.Errorf("Product not found")
-
-func (p *Product) Validate() error {
-	validate := validator.New()
-	validate.RegisterValidation("sku", validateSKU)
-	return validate.Struct(p)
-}
-
-func validateSKU(fl validator.FieldLevel) bool {
-	sku := fl.Field().String()
-	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
-	matches := re.FindAllString(sku, -1)
-	if len(matches) != 1 {
-		return false
-	}
-
-	return true
-}
 
 // GetProducts returns all products from the database
 func GetProducts() Products {

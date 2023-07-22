@@ -25,35 +25,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// A list of products returns in the response
-// swagger:response productsResponse
-type productsResponse struct {
-	// All products in the system
-	// in: body
-	Body []data.Product
-}
-
-// swagger:response noContent
-type productsNoContent struct {
-}
-
-// swagger:parameters deleteProduct
-type productIDParameterWrapper struct {
-	// The id of the product to delete from the database
-	// in: path
-	// required: true
-	ID int `json:"id"`
-}
+type KeyProduct struct{}
 
 type Products struct {
 	l *log.Logger
+	v *data.Validation
 }
 
-func NewProducts(l *log.Logger) *Products {
-	return &Products{l}
+func NewProducts(l *log.Logger, v *data.Validation) *Products {
+	return &Products{l, v}
 }
-
-type KeyProduct struct{}
 
 var ErrInvalidProductPath = fmt.Errorf("Invalid Path, path should be /products/[id]")
 
@@ -93,8 +74,8 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 			return
 		}
 
-		err = prod.Validate()
-		if err != nil {
+		errs := p.v.Validate(prod)
+		if len(errs) != 0 {
 			http.Error(rw, "Unable to validate product", http.StatusBadRequest)
 			return
 		}

@@ -2,6 +2,13 @@ basePath: /
 consumes:
     - application/json
 definitions:
+    GenericError:
+        properties:
+            message:
+                type: string
+                x-go-name: Message
+        type: object
+        x-go-package: github.com/AdiAkhileshSingh15/microservices-productapi/handlers
     Product:
         description: Product defines the structure for an API product
         properties:
@@ -36,6 +43,15 @@ definitions:
             - sku
         type: object
         x-go-package: github.com/AdiAkhileshSingh15/microservices-productapi/data
+    ValidationError:
+        properties:
+            messages:
+                items:
+                    type: string
+                type: array
+                x-go-name: Messages
+        type: object
+        x-go-package: github.com/AdiAkhileshSingh15/microservices-productapi/handlers
 info:
     description: '# Documentation for Product API'
     title: of Product API
@@ -53,6 +69,15 @@ paths:
         post:
             description: Create a new product
             operationId: createProduct
+            parameters:
+                - description: |-
+                    Product data structure to Update or Create.
+                    Note: the id field is ignored by update and create operations
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/Product'
             responses:
                 "200":
                     $ref: '#/responses/productResponse'
@@ -65,6 +90,22 @@ paths:
         put:
             description: Update a products details
             operationId: updateProduct
+            parameters:
+                - description: |-
+                    Product data structure to Update or Create.
+                    Note: the id field is ignored by update and create operations
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/Product'
+                - description: The id of the product for which the operation relates
+                  format: int64
+                  in: path
+                  name: id
+                  required: true
+                  type: integer
+                  x-go-name: ID
             responses:
                 "201":
                     $ref: '#/responses/noContentResponse'
@@ -78,14 +119,6 @@ paths:
         delete:
             description: Update a products details
             operationId: deleteProduct
-            parameters:
-                - description: The id of the product to delete from the database
-                  format: int64
-                  in: path
-                  name: id
-                  required: true
-                  type: integer
-                  x-go-name: ID
             responses:
                 "201":
                     $ref: '#/responses/noContentResponse'
@@ -98,10 +131,22 @@ paths:
 produces:
     - application/json
 responses:
-    noContent:
-        description: ""
+    errorResponse:
+        description: Generic error message returned as a string
+        schema:
+            $ref: '#/definitions/GenericError'
+    errorValidation:
+        description: Validation errors defined as an array of strings
+        schema:
+            $ref: '#/definitions/ValidationError'
+    noContentResponse:
+        description: No content is returned by this API endpoint
+    productResponse:
+        description: Data structure representing a single product
+        schema:
+            $ref: '#/definitions/Product'
     productsResponse:
-        description: A list of products returns in the response
+        description: A list of products
         schema:
             items:
                 $ref: '#/definitions/Product'

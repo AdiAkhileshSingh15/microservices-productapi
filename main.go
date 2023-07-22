@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/AdiAkhileshSingh15/microservices-productapi/data"
 	"github.com/AdiAkhileshSingh15/microservices-productapi/handlers"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
@@ -26,7 +27,8 @@ func main() {
 	}
 
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
-	ph := handlers.NewProducts(l)
+	v := data.NewValidation()
+	ph := handlers.NewProducts(l, v)
 
 	sm := mux.NewRouter()
 
