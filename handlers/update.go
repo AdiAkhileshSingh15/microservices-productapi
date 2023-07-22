@@ -6,6 +6,14 @@ import (
 	"github.com/AdiAkhileshSingh15/microservices-productapi/data"
 )
 
+// swagger:route PUT /products products updateProduct
+// Update a products details
+//
+// responses:
+//	201: noContentResponse
+//  404: errorResponse
+//  422: errorValidation
+
 func (p *Products) UpdateProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle PUT Product")
 	prod := r.Context().Value(KeyProduct{}).(*data.Product)

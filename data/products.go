@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Product defines the structure for an API product
 // swagger:model
 type Product struct {
 	// the id for this product
@@ -35,8 +36,10 @@ type Product struct {
 	DeletedOn string `json:"-"`
 }
 
+// Products defines a slice of Product
 type Products []*Product
 
+// ErrProductNotFound is an error raised when a product can not be found in the database
 var ErrProductNotFound = fmt.Errorf("Product not found")
 
 func (p *Product) Validate() error {
@@ -56,6 +59,7 @@ func validateSKU(fl validator.FieldLevel) bool {
 	return true
 }
 
+// GetProducts returns all products from the database
 func GetProducts() Products {
 	return productList
 }
@@ -65,6 +69,10 @@ func AddProduct(p *Product) {
 	productList = append(productList, p)
 }
 
+// UpdateProduct replaces a product in the database with the given
+// item.
+// If a product with the given id does not exist in the database
+// this function returns a ProductNotFound error
 func UpdateProduct(p *Product) error {
 	i := findIndexByProductID(p.ID)
 	if i == -1 {
