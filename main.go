@@ -34,18 +34,18 @@ func main() {
 	sm := mux.NewRouter()
 
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/", ph.GetProducts)
+	getRouter.HandleFunc("/products", ph.GetProducts)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProduct)
+	putRouter.HandleFunc("/products", ph.UpdateProduct)
 	putRouter.Use(ph.MiddlewareProductValidation)
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.HandleFunc("/products", ph.AddProduct)
 	postRouter.Use(ph.MiddlewareProductValidation)
 
 	deleteRouter := sm.Methods(http.MethodDelete).Subrouter()
-	deleteRouter.HandleFunc("/{id:[0-9]+}", ph.DeleteProduct)
+	deleteRouter.HandleFunc("/products/{id:[0-9]+}", ph.DeleteProduct)
 
 	ops := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
 	sh := middleware.Redoc(ops, nil)
@@ -59,6 +59,7 @@ func main() {
 	s := &http.Server{
 		Addr:         ":" + port,
 		Handler:      ch(sm),
+		ErrorLog:     l,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
@@ -68,6 +69,7 @@ func main() {
 		err := s.ListenAndServe()
 		if err != nil {
 			l.Fatal(err)
+			os.Exit(1)
 		}
 	}()
 

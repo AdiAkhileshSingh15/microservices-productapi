@@ -16,13 +16,19 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 
 		err := data.FromJSON(prod, r.Body)
 		if err != nil {
-			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+			p.l.Println("[ERROR] deserializing product", err)
+
+			rw.WriteHeader(http.StatusBadRequest)
+			data.ToJSON(&GenericError{Message: err.Error()}, rw)
 			return
 		}
 
 		errs := p.v.Validate(prod)
 		if len(errs) != 0 {
-			http.Error(rw, "Unable to validate product", http.StatusBadRequest)
+			p.l.Println("[ERROR] validating product", errs)
+
+			rw.WriteHeader(http.StatusUnprocessableEntity)
+			data.ToJSON(&ValidationError{Messages: errs.Errors()}, rw)
 			return
 		}
 
