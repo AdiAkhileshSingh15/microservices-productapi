@@ -44,6 +44,15 @@ func GetProducts() Products {
 	return productList
 }
 
+func GetProductByID(id int) (*Product, error) {
+	i := findIndexByProductID(id)
+	if id == -1 {
+		return nil, ErrProductNotFound
+	}
+
+	return productList[i], nil
+}
+
 func AddProduct(p *Product) {
 	p.ID = getNextID()
 	productList = append(productList, p)
