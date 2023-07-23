@@ -5,12 +5,14 @@ go 1.20
 require (
 	github.com/go-openapi/runtime v0.26.0
 	github.com/go-playground/validator/v10 v10.14.1
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.5.1
 )
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
