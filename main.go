@@ -8,12 +8,15 @@ import (
 	"os/signal"
 	"time"
 
+	protos "github.com/AdiAkhileshSingh15/microservices-currency/protos/currency"
 	"github.com/AdiAkhileshSingh15/microservices-productapi/data"
 	"github.com/AdiAkhileshSingh15/microservices-productapi/handlers"
 	"github.com/go-openapi/runtime/middleware"
 	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/go-hclog"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -27,14 +30,30 @@ func main() {
 		log.Fatal("PORT is not found in the environment")
 	}
 
-	l := log.New(os.Stdout, "product-api", log.LstdFlags)
+	l := hclog.Default()
 	v := data.NewValidation()
-	ph := handlers.NewProducts(l, v)
+
+	conn, err := grpc.Dial("localhost:9092", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+
+	defer conn.Close()
+
+	// create client
+	cc := protos.NewCurrencyClient(conn)
+
+	db := data.NewProductsDB(cc, l)
+
+	ph := handlers.NewProducts(l, v, db)
 
 	sm := mux.NewRouter()
 
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/products", ph.GetProducts).Queries("currency", "{[A-Z]{3}}")
 	getRouter.HandleFunc("/products", ph.GetProducts)
+
+	getRouter.HandleFunc("/products/{id:[0-9]+}", ph.GetProductByID).Queries("currency", "{[A-Z]{3}}")
 	getRouter.HandleFunc("/products/{id:[0-9]+}", ph.GetProductByID)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
@@ -60,7 +79,7 @@ func main() {
 	s := &http.Server{
 		Addr:         ":" + port,
 		Handler:      ch(sm),
-		ErrorLog:     l,
+		ErrorLog:     l.StandardLogger(&hclog.StandardLoggerOptions{}),
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
@@ -69,7 +88,7 @@ func main() {
 	go func() {
 		err := s.ListenAndServe()
 		if err != nil {
-			l.Fatal(err)
+			l.Error("Error starting server", err)
 			os.Exit(1)
 		}
 	}()
@@ -79,7 +98,7 @@ func main() {
 	signal.Notify(sigChan, os.Kill)
 
 	sig := <-sigChan
-	l.Println("Received terminate, graceful shutdown", sig)
+	l.Info("Received terminate, graceful shutdown", sig)
 
 	tc, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
