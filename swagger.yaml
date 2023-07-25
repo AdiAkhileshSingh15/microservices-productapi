@@ -27,7 +27,7 @@ definitions:
                 x-go-name: Name
             price:
                 description: the price for this product
-                format: float
+                format: double
                 minimum: 0.01
                 type: number
                 x-go-name: Price
@@ -61,6 +61,13 @@ paths:
         get:
             description: Returns a list of products
             operationId: listProducts
+            parameters:
+                - description: |-
+                    Currency used when returning the price of the product
+                    when not specified, the default is EUR
+                  in: query
+                  name: Currency
+                  type: string
             responses:
                 "200":
                     $ref: '#/responses/productsResponse'
@@ -126,6 +133,23 @@ paths:
                 "404":
                     $ref: '#/responses/errorResponse'
                 "501":
+                    $ref: '#/responses/errorResponse'
+            tags:
+                - products
+        get:
+            description: Return a list of products from the database
+            operationId: listSingleProduct
+            parameters:
+                - description: |-
+                    Currency used when returning the price of the product
+                    when not specified, the default is EUR
+                  in: query
+                  name: Currency
+                  type: string
+            responses:
+                "200":
+                    $ref: '#/responses/productResponse'
+                "404":
                     $ref: '#/responses/errorResponse'
             tags:
                 - products
