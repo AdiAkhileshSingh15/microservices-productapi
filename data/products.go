@@ -1,8 +1,12 @@
 package data
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	protos "github.com/AdiAkhileshSingh15/microservices-currency/protos/currency"
+	"github.com/hashicorp/go-hclog"
 )
 
 // Product defines the structure for an API product
@@ -22,7 +26,7 @@ type Product struct {
 	//
 	// required: true
 	// min: 0.01
-	Price float32 `json:"price" validate:"gt=0"`
+	Price float64 `json:"price" validate:"gt=0"`
 	// the sku for this product
 	//
 	// required: true
@@ -36,21 +40,87 @@ type Product struct {
 // Products defines a slice of Product
 type Products []*Product
 
+type ProductsDB struct {
+	currency protos.CurrencyClient
+	log      hclog.Logger
+	rates    map[string]float64
+	client   protos.Currency_SubscribeRatesClient
+}
+
+func NewProductsDB(cc protos.CurrencyClient, l hclog.Logger) *ProductsDB {
+	pb := &ProductsDB{cc, l, make(map[string]float64), nil}
+
+	go pb.handleUpdates()
+
+	return pb
+}
+
+func (p *ProductsDB) handleUpdates() {
+	sub, err := p.currency.SubscribeRates(context.Background())
+	if err != nil {
+		p.log.Error("Error subscribing to rates", "error", err)
+		return
+	}
+
+	p.client = sub
+
+	for {
+		rr, err := sub.Recv()
+		p.log.Info("Recieved updated rate from server", "dest", rr.Destination.String(), "rate", rr.Rate)
+
+		if err != nil {
+			p.log.Error("Error receiving message", "error", err)
+			return
+		}
+
+		p.rates[rr.Destination.String()] = rr.Rate
+	}
+}
+
 // ErrProductNotFound is an error raised when a product can not be found in the database
 var ErrProductNotFound = fmt.Errorf("Product not found")
 
 // GetProducts returns all products from the database
-func GetProducts() Products {
-	return productList
+func (p *ProductsDB) GetProducts(currency string) (Products, error) {
+	if currency == "" {
+		return productList, nil
+	}
+
+	rate, err := p.getRate(currency)
+	if err != nil {
+		p.log.Error("[ERROR] getting rate", "currency", currency, "error", err)
+		return nil, err
+	}
+
+	pr := Products{}
+	for _, p := range productList {
+		np := *p
+		np.Price = np.Price * rate
+		pr = append(pr, &np)
+	}
+
+	return pr, nil
 }
 
-func GetProductByID(id int) (*Product, error) {
+func (p *ProductsDB) GetProductByID(id int, currency string) (*Product, error) {
 	i := findIndexByProductID(id)
 	if id == -1 {
 		return nil, ErrProductNotFound
 	}
+	if currency == "" {
+		return productList[i], nil
+	}
 
-	return productList[i], nil
+	rate, err := p.getRate(currency)
+	if err != nil {
+		p.log.Error("[ERROR] getting rate", "currency", currency, "error", err)
+		return nil, err
+	}
+
+	np := *productList[i]
+	np.Price = np.Price * rate
+
+	return &np, nil
 }
 
 func AddProduct(p *Product) {
@@ -98,6 +168,26 @@ func findIndexByProductID(id int) int {
 func getNextID() int {
 	lp := productList[len(productList)-1]
 	return lp.ID + 1
+}
+
+func (p *ProductsDB) getRate(destination string) (float64, error) {
+	if r, ok := p.rates[destination]; ok {
+		return r, nil
+	}
+
+	rr := &protos.RateRequest{
+		Base:        protos.Currencies(protos.Currencies_value["EUR"]),
+		Destination: protos.Currencies(protos.Currencies_value[destination]),
+	}
+
+	// get initial rate
+	resp, err := p.currency.GetRate(context.Background(), rr)
+	p.rates[destination] = resp.Rate
+
+	// subscribe for updates
+	p.client.Send(rr)
+
+	return resp.Rate, err
 }
 
 var productList = []*Product{
