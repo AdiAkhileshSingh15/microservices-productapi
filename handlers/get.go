@@ -12,14 +12,22 @@ import (
 //	200: productsResponse
 
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle GET Products")
+	p.l.Debug("Get all records")
 
 	rw.Header().Add("Content-Type", "application/json")
 
-	lp := data.GetProducts()
-	err := data.ToJSON(lp, rw)
+	cur := r.URL.Query().Get("currency")
+
+	lp, err := p.productDB.GetProducts(cur)
 	if err != nil {
-		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
+		rw.WriteHeader(http.StatusNotFound)
+		data.ToJSON(&GenericError{Message: err.Error()}, rw)
+		return
+	}
+
+	err = data.ToJSON(lp, rw)
+	if err != nil {
+		p.l.Error("Unable to serialize product", "error", err)
 	}
 }
 
@@ -33,22 +41,23 @@ func (p *Products) GetProductByID(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 
 	id := getProductID(r)
+	cur := r.URL.Query().Get("currency")
 
-	p.l.Println("[DEBUG] get record id", id)
+	p.l.Debug("Get record id", id)
 
-	prod, err := data.GetProductByID(id)
+	prod, err := p.productDB.GetProductByID(id, cur)
 
 	switch err {
 	case nil:
 
 	case data.ErrProductNotFound:
-		p.l.Println("[ERROR] fetching product", err)
+		p.l.Error("Unable to fetch product", err)
 
 		rw.WriteHeader(http.StatusNotFound)
 		data.ToJSON(&GenericError{Message: err.Error()}, rw)
 		return
 	default:
-		p.l.Println("[ERROR] fetching product", err)
+		p.l.Error("Unable to fetch product", err)
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		data.ToJSON(&GenericError{Message: err.Error()}, rw)
@@ -58,6 +67,6 @@ func (p *Products) GetProductByID(rw http.ResponseWriter, r *http.Request) {
 	err = data.ToJSON(prod, rw)
 	if err != nil {
 		// we should never be here but log the error just incase
-		p.l.Println("[ERROR] serializing product", err)
+		p.l.Error("Unable to serialize product", err)
 	}
 }

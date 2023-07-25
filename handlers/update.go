@@ -15,12 +15,12 @@ import (
 //  422: errorValidation
 
 func (p *Products) UpdateProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle PUT Product")
+	p.l.Debug("Handle PUT Product")
 	prod := r.Context().Value(KeyProduct{}).(*data.Product)
 
 	rw.Header().Add("Content-Type", "application/json")
 
-	p.l.Printf("Prod: %#v", prod)
+	p.l.Info("Prod: %#v", prod)
 	err := data.UpdateProduct(prod)
 	if err == data.ErrProductNotFound {
 		http.Error(rw, "Product not found", http.StatusNotFound)

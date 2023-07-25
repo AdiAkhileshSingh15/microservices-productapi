@@ -16,11 +16,11 @@ import (
 //	 501: errorResponse
 
 func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle POST Product")
+	p.l.Error("Handle POST Product")
 
 	rw.Header().Add("Content-Type", "application/json")
 
 	prod := r.Context().Value(KeyProduct{}).(*data.Product)
-	p.l.Printf("Prod: %#v", prod)
+	p.l.Info("Prod: %#v", prod)
 	data.AddProduct(prod)
 }
