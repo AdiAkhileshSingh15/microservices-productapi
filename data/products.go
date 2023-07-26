@@ -7,6 +7,8 @@ import (
 
 	protos "github.com/AdiAkhileshSingh15/microservices-currency/protos/currency"
 	"github.com/hashicorp/go-hclog"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Product defines the structure for an API product
@@ -65,15 +67,43 @@ func (p *ProductsDB) handleUpdates() {
 	p.client = sub
 
 	for {
-		rr, err := sub.Recv()
-		p.log.Info("Recieved updated rate from server", "dest", rr.Destination.String(), "rate", rr.Rate)
+		srr, err := sub.Recv()
 
 		if err != nil {
-			p.log.Error("Error receiving message", "error", err)
+			p.log.Error("Error while waiting for message", "error", err)
 			return
 		}
 
-		p.rates[rr.Destination.String()] = rr.Rate
+		// handle a returned error message
+		if grpcError := srr.GetError(); grpcError != nil {
+			sre := status.FromProto(grpcError)
+
+			if sre.Code() == codes.InvalidArgument {
+				errDetails := ""
+				// get the RateRequest serialized in the error response
+				// Details is a collection but we are only returning a single item
+				if d := sre.Details(); len(d) > 0 {
+					p.log.Error("Deets", "d", d)
+					if rr, ok := d[0].(*protos.RateRequest); ok {
+						errDetails = fmt.Sprintf("base: %s destination: %s", rr.GetBase().String(), rr.GetDestination().String())
+					}
+				}
+
+				p.log.Error("Received error from currency service rate subscription", "error", grpcError.GetMessage(), "details", errDetails)
+			}
+		}
+
+		if resp := srr.GetRateResponse(); resp != nil {
+			p.log.Info("Received updated rate from server", "dest", resp.Destination.String(), "rate", resp.Rate)
+
+			if err != nil {
+				p.log.Error("Error receiving message", "error", err)
+				return
+			}
+
+			p.rates[resp.Destination.String()] = resp.Rate
+		}
+
 	}
 }
 
@@ -88,7 +118,7 @@ func (p *ProductsDB) GetProducts(currency string) (Products, error) {
 
 	rate, err := p.getRate(currency)
 	if err != nil {
-		p.log.Error("[ERROR] getting rate", "currency", currency, "error", err)
+		p.log.Error("getting rate", "currency", currency, "error", err)
 		return nil, err
 	}
 
@@ -113,7 +143,7 @@ func (p *ProductsDB) GetProductByID(id int, currency string) (*Product, error) {
 
 	rate, err := p.getRate(currency)
 	if err != nil {
-		p.log.Error("[ERROR] getting rate", "currency", currency, "error", err)
+		p.log.Error("getting rate", "currency", currency, "error", err)
 		return nil, err
 	}
 
@@ -171,9 +201,9 @@ func getNextID() int {
 }
 
 func (p *ProductsDB) getRate(destination string) (float64, error) {
-	if r, ok := p.rates[destination]; ok {
-		return r, nil
-	}
+	// if r, ok := p.rates[destination]; ok {
+	// 	return r, nil
+	// }
 
 	rr := &protos.RateRequest{
 		Base:        protos.Currencies(protos.Currencies_value["EUR"]),
@@ -182,6 +212,20 @@ func (p *ProductsDB) getRate(destination string) (float64, error) {
 
 	// get initial rate
 	resp, err := p.currency.GetRate(context.Background(), rr)
+	if err != nil {
+		// convert the GRPC error message
+		grpcError, ok := status.FromError(err)
+		if !ok {
+			// unable to convert grpc error
+			return -1, err
+		}
+
+		// if this is an Invalid Arguments exception santise the message before returning
+		if grpcError.Code() == codes.InvalidArgument {
+			return -1, fmt.Errorf("unable to retreive exchange rate from currency service: %s", grpcError.Message())
+		}
+	}
+
 	p.rates[destination] = resp.Rate
 
 	// subscribe for updates

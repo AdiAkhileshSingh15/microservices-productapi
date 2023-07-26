@@ -3,7 +3,7 @@ module github.com/AdiAkhileshSingh15/microservices-productapi
 go 1.20
 
 require (
-	github.com/AdiAkhileshSingh15/grpcserver v0.0.0-20230725100716-e5fdda09bce3
+	github.com/AdiAkhileshSingh15/microservices-currency v0.0.0-20230726103054-237cb27d3628
 	github.com/go-openapi/runtime v0.26.0
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/gorilla/handlers v1.5.1
@@ -14,7 +14,6 @@ require (
 )
 
 require (
-	github.com/AdiAkhileshSingh15/microservices-currency v0.0.0-20230724164505-6b5f4d694c88 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect

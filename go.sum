@@ -1,7 +1,5 @@
-github.com/AdiAkhileshSingh15/grpcserver v0.0.0-20230725100716-e5fdda09bce3 h1:q1AiyMg0ugDy6AlYblHV736VXMhNNI4yceifFwXwBGg=
-github.com/AdiAkhileshSingh15/grpcserver v0.0.0-20230725100716-e5fdda09bce3/go.mod h1:eDLhOx0XvMg+RSo0yu7XRPF4Sv78A5bEUJJuaO61ank=
-github.com/AdiAkhileshSingh15/microservices-currency v0.0.0-20230724164505-6b5f4d694c88 h1:gusdKCZpXElu5U60Wnpk3n4+bNCEiDGYS1QnbJaqkv4=
-github.com/AdiAkhileshSingh15/microservices-currency v0.0.0-20230724164505-6b5f4d694c88/go.mod h1:eKZ/AGvf2A2sObPEHkbS/6TlFutD0zmB8UNEKNgIPqg=
+github.com/AdiAkhileshSingh15/microservices-currency v0.0.0-20230726103054-237cb27d3628 h1:kgPDN7Ej/dgejfLJsFc5pzv8ofTdgGbrOkYzE2XzCWo=
+github.com/AdiAkhileshSingh15/microservices-currency v0.0.0-20230726103054-237cb27d3628/go.mod h1:eKZ/AGvf2A2sObPEHkbS/6TlFutD0zmB8UNEKNgIPqg=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
